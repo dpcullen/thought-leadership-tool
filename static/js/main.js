@@ -9,7 +9,11 @@ function copyToClipboard(elementId) {
         if (btn) {
             const originalText = btn.textContent;
             btn.textContent = 'Copied!';
-            setTimeout(() => { btn.textContent = originalText; }, 2000);
+            btn.style.color = '#22c55e';
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.color = '';
+            }, 2000);
         }
     });
 }
@@ -26,40 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Generating...';
+                submitBtn.textContent = 'Working...';
             }
         });
     });
-
-    // Health check
-    fetch('/api/health')
-        .then(r => r.json())
-        .then(data => {
-            const dot = document.querySelector('.status-dot');
-            if (dot) {
-                dot.classList.toggle('error', !data.api_key_configured);
-            }
-            const statusText = document.querySelector('.status-text');
-            if (statusText) {
-                statusText.textContent = data.api_key_configured
-                    ? 'API connected'
-                    : 'API key not configured — add ANTHROPIC_API_KEY to .env';
-            }
-        })
-        .catch(() => {
-            const dot = document.querySelector('.status-dot');
-            if (dot) dot.classList.add('error');
-        });
 });
-
-// Word count for textareas
-function updateWordCount(textareaId, countId) {
-    const textarea = document.getElementById(textareaId);
-    const counter = document.getElementById(countId);
-    if (!textarea || !counter) return;
-
-    textarea.addEventListener('input', function() {
-        const words = this.value.trim().split(/\s+/).filter(w => w.length > 0).length;
-        counter.textContent = words + ' words';
-    });
-}

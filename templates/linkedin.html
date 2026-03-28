@@ -3,22 +3,21 @@
 
 {% block content %}
 <h1>LinkedIn Post Generator</h1>
-<p class="subtitle">Enter a topic or raw thoughts. Get a draft that sounds like you.</p>
+<p class="subtitle">Enter a topic or raw thoughts. Get a prompt to paste into Claude.ai.</p>
 
 {% if error %}
 <div class="error">{{ error }}</div>
 {% endif %}
 
-{% if warnings %}
-{% for w in warnings %}
-<div class="warning">{{ w }}</div>
-{% endfor %}
+{% if saved %}
+<div class="success">Draft saved to your library. <a href="{{ url_for('drafts', type='linkedin') }}" style="color: var(--success); text-decoration: underline;">View drafts</a></div>
 {% endif %}
 
-{% if not result %}
+{% if not prompt and not saved %}
+<!-- STEP 1: Enter your topic -->
 <div class="card">
-    <h2>New Post</h2>
-    <form method="POST" action="{{ url_for('linkedin') }}" data-loading="loading-gen">
+    <h2>Step 1: Enter your topic</h2>
+    <form method="POST" action="{{ url_for('linkedin') }}">
         <label for="topic">Topic or headline</label>
         <input type="text" id="topic" name="topic" placeholder="e.g., Why most AI startups will fail at enterprise sales" required>
 
@@ -41,43 +40,51 @@
         </div>
 
         <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Generate Post</button>
-        </div>
-
-        <div class="loading" id="loading-gen">
-            <div class="spinner"></div>
-            <span>Generating post in your voice... (10-20 seconds)</span>
+            <button type="submit" class="btn btn-primary">Build Prompt</button>
         </div>
     </form>
 </div>
 {% endif %}
 
-{% if result %}
+{% if prompt %}
+<!-- STEP 2: Copy prompt to Claude.ai -->
 <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2>Generated Draft</h2>
-        <button class="copy-btn" onclick="copyToClipboard('draft-output')">Copy</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h2>Step 2: Copy this prompt</h2>
+        <button class="copy-btn" onclick="copyToClipboard('prompt-output')">Copy Prompt</button>
     </div>
-    <div class="result-box" id="draft-output">{{ result }}</div>
-    <div class="success">Draft auto-saved to your library.</div>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Copy the prompt below and paste it into <a href="https://claude.ai" target="_blank" style="color: var(--accent);">Claude.ai</a> (free). It has your voice profile, style rules, and quality gates built in.</p>
+    <div class="result-box" id="prompt-output" style="font-size: 0.85rem; max-height: 400px;">{{ prompt }}</div>
 </div>
 
+<!-- STEP 3: Paste result back and save -->
 <div class="card">
-    <h2>Refine This Draft</h2>
-    <form method="POST" action="{{ url_for('linkedin_refine') }}" data-loading="loading-refine">
-        <input type="hidden" name="original_draft" value="{{ result }}">
-
-        <label for="feedback">What would you change?</label>
-        <textarea id="feedback" name="feedback" placeholder="e.g., Make the opening sharper, add the Databricks revenue number, tone down the last paragraph..."></textarea>
+    <h2>Step 3: Paste Claude's response and save</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">After Claude.ai generates your post, paste the final version below to save it.</p>
+    <form method="POST" action="{{ url_for('linkedin_save') }}">
+        <label for="final_content">Paste your final draft here</label>
+        <textarea id="final_content" name="final_content" rows="8" placeholder="Paste the LinkedIn post that Claude.ai generated..."></textarea>
 
         <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Refine</button>
+            <button type="submit" class="btn btn-primary">Save Draft</button>
             <a href="{{ url_for('linkedin') }}" class="btn btn-secondary">Start Over</a>
         </div>
+    </form>
+</div>
 
-        <div class="loading" id="loading-refine">
-            <div class="spinner"></div>
-            <span>Refining draft...</span>
+<!-- OPTIONAL: Refine an existing draft -->
+<div class="card">
+    <h2>Need to refine a draft?</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Paste your current draft and describe what to change. This builds a new prompt for Claude.ai.</p>
+    <form method="POST" action="{{ url_for('linkedin_refine') }}">
+        <label for="original_draft">Current draft</label>
+        <textarea id="original_draft" name="original_draft" rows="5" placeholder="Paste the draft you want to refine..."></textarea>
+
+        <label for="feedback">What would you change?</label>
+        <textarea id="feedback" name="feedback" rows="3" placeholder="e.g., Make the opening sharper, add the Databricks revenue number, tone down the last paragraph..."></textarea>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-secondary">Build Refinement Prompt</button>
         </div>
     </form>
 </div>

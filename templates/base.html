@@ -12,9 +12,10 @@
     <nav>
         <a href="{{ url_for('index') }}" class="logo">TL Engine</a>
         <div class="nav-links">
-            <a href="{{ url_for('linkedin') }}" {% if request.endpoint == 'linkedin' %}class="active"{% endif %}>LinkedIn Posts</a>
-            <a href="{{ url_for('digest') }}" {% if request.endpoint == 'digest' %}class="active"{% endif %}>Weekly Digest</a>
-            <a href="{{ url_for('drafts') }}" {% if request.endpoint == 'drafts' %}class="active"{% endif %}>Saved Drafts</a>
+            <a href="{{ url_for('linkedin') }}" {% if request.endpoint in ['linkedin', 'linkedin_refine', 'linkedin_save'] %}class="active"{% endif %}>LinkedIn Posts</a>
+            <a href="{{ url_for('digest') }}" {% if request.endpoint in ['digest', 'digest_save'] %}class="active"{% endif %}>Weekly Digest</a>
+            <a href="{{ url_for('drafts') }}" {% if request.endpoint in ['drafts', 'view_draft'] %}class="active"{% endif %}>Saved Drafts</a>
+            <a href="https://claude.ai" target="_blank" style="margin-left: auto;">Open Claude.ai &rarr;</a>
         </div>
     </nav>
 
@@ -24,7 +25,7 @@
 
     <div class="status-bar">
         <div class="status-dot"></div>
-        <span class="status-text">Checking connection...</span>
+        <span class="status-text">Free mode — no API costs</span>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>

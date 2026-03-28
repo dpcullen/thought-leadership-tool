@@ -3,35 +3,35 @@
 
 {% block content %}
 <h1>Thought Leadership Engine</h1>
-<p class="subtitle">Ghostwriting tools for Dallas Cullen. Nothing publishes without your approval.</p>
+<p class="subtitle">Ghostwriting tools for Dallas Cullen. Nothing publishes without your approval. Zero API costs.</p>
+
+<div class="card" style="border-color: var(--accent); margin-bottom: 2rem;">
+    <h2>How it works (3 steps)</h2>
+    <div class="result-box" style="background: transparent; border: none; padding: 0;">1. Fill in your topic or intel — the tool builds a perfect prompt with your voice profile baked in.
+
+2. Copy the prompt, paste it into Claude.ai (free), and get your draft.
+
+3. Paste the result back here to save it. Refine if needed and repeat.
+
+No API key needed. No costs. Just you, this tool, and Claude.ai.</div>
+</div>
 
 <div class="feature-grid">
     <a href="{{ url_for('linkedin') }}" class="feature-card">
         <h3>LinkedIn Post Generator</h3>
-        <p>Feed a topic or raw thoughts. Get a polished post draft in your voice. Edit, refine, or scrap it — your call.</p>
+        <p>Enter a topic or raw thoughts. Get a ready-to-paste prompt with your voice, style rules, and quality gates built in.</p>
     </a>
     <a href="{{ url_for('digest') }}" class="feature-card">
         <h3>Weekly Market Digest</h3>
-        <p>Auto-gathers AI/SaaS intel from tier-1 sources. Generates a newsletter draft for Substack. Review before sending.</p>
+        <p>Gathers AI/SaaS intel from tier-1 feeds. Builds a prompt that turns it into a Substack newsletter in your voice.</p>
     </a>
     <a href="{{ url_for('drafts') }}" class="feature-card">
         <h3>Saved Drafts</h3>
-        <p>All generated content is auto-saved. Review, refine, or delete from your draft library.</p>
+        <p>All your final content saved in one place. Review, copy for publishing, or delete.</p>
     </a>
-    <a href="{{ url_for('drafts') }}?type=digest" class="feature-card">
-        <h3>Voice Profile</h3>
-        <p>Direct. Confident. No filler. Trained on McKinsey-honed analytical style with zero LinkedIn cringe.</p>
+    <a href="https://claude.ai" target="_blank" class="feature-card">
+        <h3>Open Claude.ai &rarr;</h3>
+        <p>Free AI chat. Paste your generated prompts here to get drafts back. No account costs.</p>
     </a>
-</div>
-
-<div class="card" style="margin-top: 2rem;">
-    <h2>How it works</h2>
-    <div class="result-box">1. Choose LinkedIn Post or Weekly Digest
-2. Enter your topic, thoughts, or let the tool gather market intel
-3. Claude generates a draft in your voice with quality gates applied
-4. Review the draft — edit, refine with feedback, or start over
-5. Copy the final version and publish on your terms
-
-Nothing is ever published automatically. Every draft requires your approval.</div>
 </div>
 {% endblock %}

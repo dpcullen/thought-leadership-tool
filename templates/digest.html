@@ -3,16 +3,21 @@
 
 {% block content %}
 <h1>Weekly Market Digest</h1>
-<p class="subtitle">AI/SaaS market intelligence, summarized in your voice for Substack.</p>
+<p class="subtitle">AI/SaaS market intelligence, turned into a Substack newsletter in your voice.</p>
 
 {% if error %}
 <div class="error">{{ error }}</div>
 {% endif %}
 
-{% if not result and not intel_data %}
+{% if saved %}
+<div class="success">Digest saved to your library. <a href="{{ url_for('drafts', type='digest') }}" style="color: var(--success); text-decoration: underline;">View drafts</a></div>
+{% endif %}
+
+{% if not prompt and not intel_data and not saved %}
+<!-- STEP 1: Gather or paste intel -->
 <div class="card">
-    <h2>Step 1: Gather Intelligence</h2>
-    <p style="color: var(--text-muted); margin-bottom: 1rem;">Pull from RSS feeds (Stratechery, Bloomberg, WSJ, Axios, HBR) or paste your own research below.</p>
+    <h2>Step 1: Gather intelligence</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Pull from RSS feeds (Stratechery, Bloomberg, WSJ, Axios, HBR) or paste your own research.</p>
 
     <form method="POST" action="{{ url_for('digest') }}" data-loading="loading-gather">
         <input type="hidden" name="action" value="gather">
@@ -27,33 +32,34 @@
 </div>
 
 <div class="card">
-    <h2>Or: Skip to Manual Input</h2>
-    <p style="color: var(--text-muted); margin-bottom: 1rem;">Paste articles, notes, or data points you've collected and go straight to digest generation.</p>
+    <h2>Or: Skip straight to manual input</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Paste articles, notes, or data points and go straight to prompt generation.</p>
     <form method="POST" action="{{ url_for('digest') }}">
         <input type="hidden" name="action" value="generate">
 
         <label for="manual_intel_skip">Your research / notes</label>
-        <textarea id="manual_intel_skip" name="manual_intel" rows="8" placeholder="Paste article excerpts, funding announcements, product news, earnings data, or any intel you've gathered..."></textarea>
+        <textarea id="manual_intel_skip" name="manual_intel" rows="8" placeholder="Paste article excerpts, funding announcements, product news, earnings data..."></textarea>
 
         <label for="custom_focus_skip">Focus area this week (optional)</label>
         <input type="text" id="custom_focus_skip" name="custom_focus" placeholder="e.g., AI infrastructure consolidation, vertical SaaS M&A wave">
 
         <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Generate Digest</button>
+            <button type="submit" class="btn btn-primary">Build Digest Prompt</button>
         </div>
     </form>
 </div>
 {% endif %}
 
-{% if intel_data and not result %}
+{% if intel_data and not prompt %}
+<!-- STEP 1b: Review gathered intel -->
 <div class="card">
-    <h2>Step 2: Review Intel & Generate</h2>
-    <p style="color: var(--text-muted); margin-bottom: 1rem;">Here's what was gathered. Add your own research below, then generate the digest.</p>
+    <h2>Step 2: Review intel and build prompt</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Here's what was gathered. Add your own intel below, then build the prompt.</p>
 
-    <form method="POST" action="{{ url_for('digest') }}" data-loading="loading-generate">
+    <form method="POST" action="{{ url_for('digest') }}">
         <input type="hidden" name="action" value="generate">
 
-        <label>Gathered intelligence (auto-populated)</label>
+        <label>Gathered intelligence</label>
         <textarea name="intel_data" rows="10" style="font-size: 0.85rem;">{{ intel_data }}</textarea>
 
         <label for="manual_intel">Add your own research (optional)</label>
@@ -63,45 +69,54 @@
         <input type="text" id="custom_focus" name="custom_focus" placeholder="e.g., AI infrastructure consolidation, vertical SaaS M&A wave">
 
         <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Generate Digest</button>
+            <button type="submit" class="btn btn-primary">Build Digest Prompt</button>
             <a href="{{ url_for('digest') }}" class="btn btn-secondary">Start Over</a>
-        </div>
-
-        <div class="loading" id="loading-generate">
-            <div class="spinner"></div>
-            <span>Claude is writing your digest... (20-40 seconds)</span>
         </div>
     </form>
 </div>
 {% endif %}
 
-{% if result %}
+{% if prompt %}
+<!-- STEP 2/3: Copy prompt -->
 <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h2>Newsletter Draft</h2>
-        <button class="copy-btn" onclick="copyToClipboard('digest-output')">Copy</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h2>Copy this prompt</h2>
+        <button class="copy-btn" onclick="copyToClipboard('prompt-output')">Copy Prompt</button>
     </div>
-    <div class="result-box" id="digest-output">{{ result }}</div>
-    <div class="success">Draft auto-saved to your library.</div>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Copy and paste into <a href="https://claude.ai" target="_blank" style="color: var(--accent);">Claude.ai</a> (free). Your voice, source rules, and quality gates are all built in.</p>
+    <div class="result-box" id="prompt-output" style="font-size: 0.85rem; max-height: 400px;">{{ prompt }}</div>
 </div>
 
+<!-- STEP 3/4: Paste result back -->
 <div class="card">
-    <h2>Refine This Digest</h2>
-    <form method="POST" action="{{ url_for('digest') }}" data-loading="loading-refine">
-        <input type="hidden" name="action" value="refine">
-        <input type="hidden" name="original_digest" value="{{ result }}">
-
-        <label for="feedback">What would you change?</label>
-        <textarea id="feedback" name="feedback" placeholder="e.g., Lead with the Anthropic funding round instead, cut the HBR reference, make the closing more pointed..."></textarea>
+    <h2>Paste Claude's response and save</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">After Claude.ai writes your digest, paste the final version below.</p>
+    <form method="POST" action="{{ url_for('digest_save') }}">
+        <label for="final_content">Paste your final digest here</label>
+        <textarea id="final_content" name="final_content" rows="10" placeholder="Paste the newsletter that Claude.ai generated..."></textarea>
 
         <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Refine</button>
+            <button type="submit" class="btn btn-primary">Save Digest</button>
             <a href="{{ url_for('digest') }}" class="btn btn-secondary">Start Over</a>
         </div>
+    </form>
+</div>
 
-        <div class="loading" id="loading-refine">
-            <div class="spinner"></div>
-            <span>Refining digest...</span>
+<!-- Refine -->
+<div class="card">
+    <h2>Need to refine a digest?</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Paste your current digest and describe what to change. Builds a new prompt for Claude.ai.</p>
+    <form method="POST" action="{{ url_for('digest') }}">
+        <input type="hidden" name="action" value="refine">
+
+        <label for="original_digest">Current digest</label>
+        <textarea id="original_digest" name="original_digest" rows="5" placeholder="Paste the digest you want to refine..."></textarea>
+
+        <label for="feedback">What would you change?</label>
+        <textarea id="feedback" name="feedback" rows="3" placeholder="e.g., Lead with the Anthropic funding round instead, make the closing sharper..."></textarea>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-secondary">Build Refinement Prompt</button>
         </div>
     </form>
 </div>
