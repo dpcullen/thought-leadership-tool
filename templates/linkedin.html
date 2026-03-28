@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}LinkedIn Post Generator — TL Engine{% endblock %}
+
+{% block content %}
+<h1>LinkedIn Post Generator</h1>
+<p class="subtitle">Enter a topic or raw thoughts. Get a draft that sounds like you.</p>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+{% if warnings %}
+{% for w in warnings %}
+<div class="warning">{{ w }}</div>
+{% endfor %}
+{% endif %}
+
+{% if not result %}
+<div class="card">
+    <h2>New Post</h2>
+    <form method="POST" action="{{ url_for('linkedin') }}" data-loading="loading-gen">
+        <label for="topic">Topic or headline</label>
+        <input type="text" id="topic" name="topic" placeholder="e.g., Why most AI startups will fail at enterprise sales" required>
+
+        <label for="raw_thoughts">Raw thoughts / notes (optional)</label>
+        <textarea id="raw_thoughts" name="raw_thoughts" placeholder="Dump any rough ideas, data points, or angles you want to explore..."></textarea>
+
+        <div class="form-row">
+            <div>
+                <label for="tone_adjustment">Tone adjustment (optional)</label>
+                <input type="text" id="tone_adjustment" name="tone_adjustment" placeholder="e.g., more provocative, more measured">
+            </div>
+            <div>
+                <label for="num_variants">Number of variants</label>
+                <select id="num_variants" name="num_variants">
+                    <option value="1">1 variant</option>
+                    <option value="2" selected>2 variants</option>
+                    <option value="3">3 variants</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Generate Post</button>
+        </div>
+
+        <div class="loading" id="loading-gen">
+            <div class="spinner"></div>
+            <span>Generating post in your voice... (10-20 seconds)</span>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+{% if result %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Generated Draft</h2>
+        <button class="copy-btn" onclick="copyToClipboard('draft-output')">Copy</button>
+    </div>
+    <div class="result-box" id="draft-output">{{ result }}</div>
+    <div class="success">Draft auto-saved to your library.</div>
+</div>
+
+<div class="card">
+    <h2>Refine This Draft</h2>
+    <form method="POST" action="{{ url_for('linkedin_refine') }}" data-loading="loading-refine">
+        <input type="hidden" name="original_draft" value="{{ result }}">
+
+        <label for="feedback">What would you change?</label>
+        <textarea id="feedback" name="feedback" placeholder="e.g., Make the opening sharper, add the Databricks revenue number, tone down the last paragraph..."></textarea>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Refine</button>
+            <a href="{{ url_for('linkedin') }}" class="btn btn-secondary">Start Over</a>
+        </div>
+
+        <div class="loading" id="loading-refine">
+            <div class="spinner"></div>
+            <span>Refining draft...</span>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

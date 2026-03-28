@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Weekly Market Digest — TL Engine{% endblock %}
+
+{% block content %}
+<h1>Weekly Market Digest</h1>
+<p class="subtitle">AI/SaaS market intelligence, summarized in your voice for Substack.</p>
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+{% if not result and not intel_data %}
+<div class="card">
+    <h2>Step 1: Gather Intelligence</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Pull from RSS feeds (Stratechery, Bloomberg, WSJ, Axios, HBR) or paste your own research below.</p>
+
+    <form method="POST" action="{{ url_for('digest') }}" data-loading="loading-gather">
+        <input type="hidden" name="action" value="gather">
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Gather from Feeds</button>
+        </div>
+        <div class="loading" id="loading-gather">
+            <div class="spinner"></div>
+            <span>Scraping tier-1 sources... (15-30 seconds)</span>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h2>Or: Skip to Manual Input</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Paste articles, notes, or data points you've collected and go straight to digest generation.</p>
+    <form method="POST" action="{{ url_for('digest') }}">
+        <input type="hidden" name="action" value="generate">
+
+        <label for="manual_intel_skip">Your research / notes</label>
+        <textarea id="manual_intel_skip" name="manual_intel" rows="8" placeholder="Paste article excerpts, funding announcements, product news, earnings data, or any intel you've gathered..."></textarea>
+
+        <label for="custom_focus_skip">Focus area this week (optional)</label>
+        <input type="text" id="custom_focus_skip" name="custom_focus" placeholder="e.g., AI infrastructure consolidation, vertical SaaS M&A wave">
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Generate Digest</button>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+{% if intel_data and not result %}
+<div class="card">
+    <h2>Step 2: Review Intel & Generate</h2>
+    <p style="color: var(--text-muted); margin-bottom: 1rem;">Here's what was gathered. Add your own research below, then generate the digest.</p>
+
+    <form method="POST" action="{{ url_for('digest') }}" data-loading="loading-generate">
+        <input type="hidden" name="action" value="generate">
+
+        <label>Gathered intelligence (auto-populated)</label>
+        <textarea name="intel_data" rows="10" style="font-size: 0.85rem;">{{ intel_data }}</textarea>
+
+        <label for="manual_intel">Add your own research (optional)</label>
+        <textarea id="manual_intel" name="manual_intel" rows="5" placeholder="Paste additional articles, data points, or notes..."></textarea>
+
+        <label for="custom_focus">Focus area this week (optional)</label>
+        <input type="text" id="custom_focus" name="custom_focus" placeholder="e.g., AI infrastructure consolidation, vertical SaaS M&A wave">
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Generate Digest</button>
+            <a href="{{ url_for('digest') }}" class="btn btn-secondary">Start Over</a>
+        </div>
+
+        <div class="loading" id="loading-generate">
+            <div class="spinner"></div>
+            <span>Claude is writing your digest... (20-40 seconds)</span>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+{% if result %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Newsletter Draft</h2>
+        <button class="copy-btn" onclick="copyToClipboard('digest-output')">Copy</button>
+    </div>
+    <div class="result-box" id="digest-output">{{ result }}</div>
+    <div class="success">Draft auto-saved to your library.</div>
+</div>
+
+<div class="card">
+    <h2>Refine This Digest</h2>
+    <form method="POST" action="{{ url_for('digest') }}" data-loading="loading-refine">
+        <input type="hidden" name="action" value="refine">
+        <input type="hidden" name="original_digest" value="{{ result }}">
+
+        <label for="feedback">What would you change?</label>
+        <textarea id="feedback" name="feedback" placeholder="e.g., Lead with the Anthropic funding round instead, cut the HBR reference, make the closing more pointed..."></textarea>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Refine</button>
+            <a href="{{ url_for('digest') }}" class="btn btn-secondary">Start Over</a>
+        </div>
+
+        <div class="loading" id="loading-refine">
+            <div class="spinner"></div>
+            <span>Refining digest...</span>
+        </div>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

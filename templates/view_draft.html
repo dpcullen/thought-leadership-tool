@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}View Draft — TL Engine{% endblock %}
+
+{% block content %}
+<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+    <a href="{{ url_for('drafts') }}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Back</a>
+    <h1 style="margin-bottom: 0;">Draft</h1>
+    <span class="badge {% if draft.type == 'linkedin' %}badge-linkedin{% else %}badge-digest{% endif %}">{{ draft.type }}</span>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <span class="date" style="font-size: 0.85rem; color: var(--text-muted);">Created: {{ draft.created_at[:16] | replace('T', ' at ') }}</span>
+            {% if draft.get('updated_at') %}
+            <span class="date" style="font-size: 0.85rem; color: var(--text-muted); margin-left: 1rem;">Updated: {{ draft.updated_at[:16] | replace('T', ' at ') }}</span>
+            {% endif %}
+        </div>
+        <button class="copy-btn" onclick="copyToClipboard('draft-content')">Copy</button>
+    </div>
+
+    {% if draft.metadata %}
+    <div style="margin-bottom: 1rem; padding: 0.75rem; background: var(--bg); border-radius: 6px; font-size: 0.85rem; color: var(--text-muted);">
+        {% if draft.metadata.get('topic') %}
+        <div><strong>Topic:</strong> {{ draft.metadata.topic }}</div>
+        {% endif %}
+        {% if draft.metadata.get('custom_focus') %}
+        <div><strong>Focus:</strong> {{ draft.metadata.custom_focus }}</div>
+        {% endif %}
+        {% if draft.metadata.get('feedback') %}
+        <div><strong>Revision feedback:</strong> {{ draft.metadata.feedback }}</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="result-box" id="draft-content">{{ draft.content }}</div>
+</div>
+
+<div class="btn-group">
+    {% if draft.type == 'linkedin' %}
+    <a href="{{ url_for('linkedin') }}" class="btn btn-primary">Create New Post</a>
+    {% else %}
+    <a href="{{ url_for('digest') }}" class="btn btn-primary">Create New Digest</a>
+    {% endif %}
+    <form method="POST" action="{{ url_for('delete_draft_route', filename=draft.filename) }}" style="display: inline;" onsubmit="return confirm('Delete this draft? This cannot be undone.');">
+        <button type="submit" class="btn btn-danger">Delete Draft</button>
+    </form>
+</div>
+{% endblock %}

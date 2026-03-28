@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}TL Engine — Thought Leadership Tool{% endblock %}
+
+{% block content %}
+<h1>Thought Leadership Engine</h1>
+<p class="subtitle">Ghostwriting tools for Dallas Cullen. Nothing publishes without your approval.</p>
+
+<div class="feature-grid">
+    <a href="{{ url_for('linkedin') }}" class="feature-card">
+        <h3>LinkedIn Post Generator</h3>
+        <p>Feed a topic or raw thoughts. Get a polished post draft in your voice. Edit, refine, or scrap it — your call.</p>
+    </a>
+    <a href="{{ url_for('digest') }}" class="feature-card">
+        <h3>Weekly Market Digest</h3>
+        <p>Auto-gathers AI/SaaS intel from tier-1 sources. Generates a newsletter draft for Substack. Review before sending.</p>
+    </a>
+    <a href="{{ url_for('drafts') }}" class="feature-card">
+        <h3>Saved Drafts</h3>
+        <p>All generated content is auto-saved. Review, refine, or delete from your draft library.</p>
+    </a>
+    <a href="{{ url_for('drafts') }}?type=digest" class="feature-card">
+        <h3>Voice Profile</h3>
+        <p>Direct. Confident. No filler. Trained on McKinsey-honed analytical style with zero LinkedIn cringe.</p>
+    </a>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+    <h2>How it works</h2>
+    <div class="result-box">1. Choose LinkedIn Post or Weekly Digest
+2. Enter your topic, thoughts, or let the tool gather market intel
+3. Claude generates a draft in your voice with quality gates applied
+4. Review the draft — edit, refine with feedback, or start over
+5. Copy the final version and publish on your terms
+
+Nothing is ever published automatically. Every draft requires your approval.</div>
+</div>
+{% endblock %}

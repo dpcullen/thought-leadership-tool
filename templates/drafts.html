@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Saved Drafts — TL Engine{% endblock %}
+
+{% block content %}
+<h1>Saved Drafts</h1>
+<p class="subtitle">All generated content is auto-saved here. Nothing has been published.</p>
+
+<div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem;">
+    <a href="{{ url_for('drafts') }}" class="btn {% if not filter_type %}btn-primary{% else %}btn-secondary{% endif %}">All</a>
+    <a href="{{ url_for('drafts', type='linkedin') }}" class="btn {% if filter_type == 'linkedin' %}btn-primary{% else %}btn-secondary{% endif %}">LinkedIn Posts</a>
+    <a href="{{ url_for('drafts', type='digest') }}" class="btn {% if filter_type == 'digest' %}btn-primary{% else %}btn-secondary{% endif %}">Digests</a>
+</div>
+
+{% if drafts %}
+<div class="card" style="padding: 0;">
+    {% for draft in drafts %}
+    <div class="draft-item">
+        <a href="{{ url_for('view_draft', filename=draft.filename) }}" style="flex: 1; text-decoration: none; color: inherit;">
+            <div class="draft-info">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="badge {% if draft.type == 'linkedin' %}badge-linkedin{% else %}badge-digest{% endif %}">{{ draft.type }}</span>
+                    <span class="badge badge-draft">{{ draft.status }}</span>
+                    {% if draft.metadata and draft.metadata.get('is_revision') %}
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">revision</span>
+                    {% endif %}
+                </div>
+                <div class="preview">{{ draft.content[:200] }}{% if draft.content|length > 200 %}...{% endif %}</div>
+                <div class="date">{{ draft.created_at[:16] | replace('T', ' at ') }}</div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No drafts yet. Generate a <a href="{{ url_for('linkedin') }}" style="color: var(--accent);">LinkedIn post</a> or <a href="{{ url_for('digest') }}" style="color: var(--accent);">weekly digest</a> to get started.</p>
+</div>
+{% endif %}
+{% endblock %}
