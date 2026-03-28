@@ -215,4 +215,4 @@ if __name__ == "__main__":
     print("\n=== Thought Leadership Tool ===")
     print("Open http://localhost:5000 in your browser")
     print("================================\n")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)
