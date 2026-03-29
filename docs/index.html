@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thought Leadership Engine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+    <a href="#" class="logo" onclick="showTab('home'); return false;">Thought Leadership Engine</a>
+    <div class="nav-links">
+        <a href="#" data-tab="home" class="active" onclick="showTab('home'); return false;">Home</a>
+        <a href="#" data-tab="linkedin" onclick="showTab('linkedin'); return false;">LinkedIn Posts</a>
+        <a href="#" data-tab="digest" onclick="showTab('digest'); return false;">Weekly Digest</a>
+        <a href="#" data-tab="drafts" onclick="showTab('drafts'); return false;">Saved Drafts</a>
+        <a href="https://claude.ai" target="_blank" rel="noopener" class="claude-link">Open Claude.ai</a>
+    </div>
+    <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">&#9776;</button>
+</nav>
+
+<!-- ========== HOME TAB ========== -->
+<div id="tab-home" class="tab-content active">
+    <div class="container">
+        <h1>Thought Leadership Engine</h1>
+        <p class="subtitle">Build prompts for LinkedIn posts and weekly digests. Copy them into Claude.ai, then save the results here.</p>
+
+        <div class="feature-grid">
+            <a href="#" class="feature-card" onclick="showTab('linkedin'); return false;">
+                <h3>LinkedIn Post Generator</h3>
+                <p>Enter a topic and your raw thoughts. Get a ready-to-paste prompt that enforces your voice profile, quality gates, and writing rules.</p>
+            </a>
+            <a href="#" class="feature-card" onclick="showTab('digest'); return false;">
+                <h3>Weekly Digest Builder</h3>
+                <p>Paste your research and intel. Get a structured newsletter prompt with source filtering, voice profile, and quality gates built in.</p>
+            </a>
+            <a href="#" class="feature-card" onclick="showTab('drafts'); return false;">
+                <h3>Saved Drafts</h3>
+                <p>View, copy, and manage all your saved LinkedIn posts and digest newsletters in one place.</p>
+            </a>
+            <a href="https://claude.ai" target="_blank" rel="noopener" class="feature-card">
+                <h3>Open Claude.ai</h3>
+                <p>Open Claude in a new tab to paste your generated prompts and get results.</p>
+            </a>
+        </div>
+
+        <div class="card" style="margin-top: 2rem;">
+            <h2>How It Works</h2>
+            <div class="how-it-works">
+                <div class="step-item">
+                    <span class="step-number">1</span>
+                    <div>
+                        <strong>Fill in the form</strong>
+                        <p class="step-desc">Enter your topic, thoughts, or research data.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">2</span>
+                    <div>
+                        <strong>Copy the prompt</strong>
+                        <p class="step-desc">Click the big "Copy Prompt" button. Your voice profile and quality rules are embedded automatically.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">3</span>
+                    <div>
+                        <strong>Paste into Claude.ai</strong>
+                        <p class="step-desc">Open Claude.ai, paste the prompt, and get your draft back.</p>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">4</span>
+                    <div>
+                        <strong>Save your draft</strong>
+                        <p class="step-desc">Paste the result back here and save it to your drafts for later.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== LINKEDIN TAB ========== -->
+<div id="tab-linkedin" class="tab-content">
+    <div class="container">
+        <h1>LinkedIn Post Generator</h1>
+        <p class="subtitle">Build a prompt with your voice profile and quality gates baked in. Copy it, paste into Claude.ai, then save the result.</p>
+
+        <!-- Step 1: Build Prompt -->
+        <div class="card">
+            <h2><span class="step-badge">Step 1</span> Build Your Prompt</h2>
+            <div class="form-group">
+                <label for="li-topic">Topic *</label>
+                <input type="text" id="li-topic" placeholder="e.g., Why most AI strategies fail at the implementation layer">
+            </div>
+            <div class="form-group">
+                <label for="li-thoughts">Raw Thoughts / Notes (optional)</label>
+                <textarea id="li-thoughts" placeholder="Dump any rough ideas, data points, or angles here..."></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="li-tone">Tone Adjustment (optional)</label>
+                    <input type="text" id="li-tone" placeholder="e.g., more provocative, more analytical">
+                </div>
+                <div class="form-group">
+                    <label for="li-variants">Number of Variants</label>
+                    <select id="li-variants">
+                        <option value="1">1 variant</option>
+                        <option value="2">2 variants</option>
+                        <option value="3" selected>3 variants</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="generateLinkedInPrompt()">Generate Prompt</button>
+        </div>
+
+        <!-- Prompt Output -->
+        <div id="li-prompt-section" class="card" style="display:none;">
+            <h2><span class="step-badge">Step 2</span> Copy &amp; Paste into Claude.ai</h2>
+            <p class="step-instruction">Click the button below to copy the full prompt, then paste it into <a href="https://claude.ai" target="_blank" rel="noopener">Claude.ai</a>.</p>
+            <div class="result-box" id="li-prompt-output"></div>
+            <div class="btn-group">
+                <button class="btn btn-primary btn-large copy-prompt-btn" onclick="copyPrompt('li-prompt-output', this)">Copy Prompt to Clipboard</button>
+                <a href="https://claude.ai" target="_blank" rel="noopener" class="btn btn-secondary">Open Claude.ai</a>
+            </div>
+        </div>
+
+        <!-- Step 3: Save Result -->
+        <div id="li-save-section" class="card">
+            <h2><span class="step-badge">Step 3</span> Save Claude's Response</h2>
+            <p class="step-instruction">After Claude generates your post(s), paste the final version here to save it.</p>
+            <div class="form-group">
+                <label for="li-result">Paste Claude's Response</label>
+                <textarea id="li-result" rows="8" placeholder="Paste the LinkedIn post that Claude generated..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="saveLinkedInDraft()">Save to Drafts</button>
+            <div id="li-save-msg"></div>
+        </div>
+
+        <!-- Refinement -->
+        <div class="card">
+            <h2><span class="step-badge">Refine</span> Revise a Draft</h2>
+            <p class="step-instruction">Have a draft that needs tweaking? Paste it below with your feedback to generate a refinement prompt.</p>
+            <div class="form-group">
+                <label for="li-refine-draft">Original Draft</label>
+                <textarea id="li-refine-draft" rows="6" placeholder="Paste the draft you want to refine..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="li-refine-feedback">Your Feedback</label>
+                <textarea id="li-refine-feedback" rows="4" placeholder="e.g., Make the opening sharper, add a specific data point about market size..."></textarea>
+            </div>
+            <button class="btn btn-secondary" onclick="generateLinkedInRefinePrompt()">Generate Refinement Prompt</button>
+
+            <div id="li-refine-section" style="display:none; margin-top:1rem;">
+                <div class="result-box" id="li-refine-output"></div>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-large copy-prompt-btn" onclick="copyPrompt('li-refine-output', this)">Copy Refinement Prompt</button>
+                    <a href="https://claude.ai" target="_blank" rel="noopener" class="btn btn-secondary">Open Claude.ai</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== DIGEST TAB ========== -->
+<div id="tab-digest" class="tab-content">
+    <div class="container">
+        <h1>Weekly Digest Builder</h1>
+        <p class="subtitle">Paste your research and intel to generate a newsletter prompt with source filtering and voice profile.</p>
+
+        <!-- Step 1: Input Intel -->
+        <div class="card">
+            <h2><span class="step-badge">Step 1</span> Paste Your Research / Intel</h2>
+            <div class="form-group">
+                <label for="dg-intel">Raw Intelligence Data *</label>
+                <textarea id="dg-intel" rows="10" placeholder="Paste articles, notes, data points, funding announcements, product launches, etc."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="dg-focus">Custom Focus Area This Week (optional)</label>
+                <input type="text" id="dg-focus" placeholder="e.g., Enterprise AI adoption, SaaS consolidation">
+            </div>
+            <button class="btn btn-primary" onclick="generateDigestPrompt()">Generate Digest Prompt</button>
+        </div>
+
+        <!-- Prompt Output -->
+        <div id="dg-prompt-section" class="card" style="display:none;">
+            <h2><span class="step-badge">Step 2</span> Copy &amp; Paste into Claude.ai</h2>
+            <p class="step-instruction">Click the button below to copy the full digest prompt, then paste it into <a href="https://claude.ai" target="_blank" rel="noopener">Claude.ai</a>.</p>
+            <div class="result-box" id="dg-prompt-output"></div>
+            <div class="btn-group">
+                <button class="btn btn-primary btn-large copy-prompt-btn" onclick="copyPrompt('dg-prompt-output', this)">Copy Prompt to Clipboard</button>
+                <a href="https://claude.ai" target="_blank" rel="noopener" class="btn btn-secondary">Open Claude.ai</a>
+            </div>
+        </div>
+
+        <!-- Step 3: Save Result -->
+        <div id="dg-save-section" class="card">
+            <h2><span class="step-badge">Step 3</span> Save Claude's Response</h2>
+            <p class="step-instruction">After Claude generates your digest, paste the final version here to save it.</p>
+            <div class="form-group">
+                <label for="dg-result">Paste Claude's Response</label>
+                <textarea id="dg-result" rows="10" placeholder="Paste the digest that Claude generated..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="saveDigestDraft()">Save to Drafts</button>
+            <div id="dg-save-msg"></div>
+        </div>
+
+        <!-- Refinement -->
+        <div class="card">
+            <h2><span class="step-badge">Refine</span> Revise a Digest</h2>
+            <p class="step-instruction">Have a digest that needs tweaking? Paste it below with your feedback.</p>
+            <div class="form-group">
+                <label for="dg-refine-draft">Original Digest</label>
+                <textarea id="dg-refine-draft" rows="6" placeholder="Paste the digest you want to refine..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="dg-refine-feedback">Your Feedback</label>
+                <textarea id="dg-refine-feedback" rows="4" placeholder="e.g., Sharpen the headline insight, add more context to Deal Flow section..."></textarea>
+            </div>
+            <button class="btn btn-secondary" onclick="generateDigestRefinePrompt()">Generate Refinement Prompt</button>
+
+            <div id="dg-refine-section" style="display:none; margin-top:1rem;">
+                <div class="result-box" id="dg-refine-output"></div>
+                <div class="btn-group">
+                    <button class="btn btn-primary btn-large copy-prompt-btn" onclick="copyPrompt('dg-refine-output', this)">Copy Refinement Prompt</button>
+                    <a href="https://claude.ai" target="_blank" rel="noopener" class="btn btn-secondary">Open Claude.ai</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== DRAFTS TAB ========== -->
+<div id="tab-drafts" class="tab-content">
+    <div class="container">
+        <h1>Saved Drafts</h1>
+        <p class="subtitle">All your saved LinkedIn posts and digest newsletters. Stored in your browser's local storage.</p>
+
+        <div class="draft-filters">
+            <button class="btn btn-secondary filter-btn active" data-filter="all" onclick="filterDrafts('all', this)">All</button>
+            <button class="btn btn-secondary filter-btn" data-filter="linkedin" onclick="filterDrafts('linkedin', this)">LinkedIn</button>
+            <button class="btn btn-secondary filter-btn" data-filter="digest" onclick="filterDrafts('digest', this)">Digest</button>
+        </div>
+
+        <div id="drafts-list" class="card">
+            <p class="empty-state">No saved drafts yet. Generate a post or digest and save it here.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Draft View Modal -->
+<div id="draft-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Draft</h2>
+            <button class="btn btn-secondary" onclick="closeModal()">&times; Close</button>
+        </div>
+        <div class="modal-meta" id="modal-meta"></div>
+        <div class="result-box" id="modal-body"></div>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="copyPrompt('modal-body', this)">Copy Content</button>
+            <button class="btn btn-danger" id="modal-delete-btn">Delete Draft</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
