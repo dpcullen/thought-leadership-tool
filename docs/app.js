@@ -261,7 +261,7 @@ async function callGeminiAPI(promptText) {
         throw new Error('NO_API_KEY');
     }
 
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey;
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=' + apiKey;
 
     const response = await fetch(url, {
         method: 'POST',
@@ -816,10 +816,43 @@ function escapeHtml(text) {
 // --- Initialization ---
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Auto-configure API key on first visit
-    if (!localStorage.getItem('tl-gemini-key')) {
-        localStorage.setItem('tl-gemini-key', 'AIzaSyA-sZxt5gF9Zi31_wqoMNYTyEDn4LXiuJg');
+    // If no API key saved, show a friendly first-time setup banner
+    if (!hasApiKey()) {
+        showFirstTimeSetup();
     }
     updateApiKeyStatus();
     updateApiNotices();
 });
+
+function showFirstTimeSetup() {
+    const banner = document.createElement('div');
+    banner.id = 'first-time-banner';
+    banner.innerHTML = `
+        <div style="background: #1a2332; border: 2px solid var(--accent, #4a9eff); border-radius: 12px; padding: 2rem; max-width: 500px; margin: 2rem auto; text-align: center;">
+            <h2 style="margin: 0 0 0.5rem 0; color: #fff;">Welcome! One-time setup</h2>
+            <p style="color: #aaa; margin: 0 0 1.5rem 0;">Paste your Gemini API key below. It saves in your browser — never leaves your device except to generate drafts.</p>
+            <p style="color: #aaa; margin: 0 0 1rem 0; font-size: 0.85rem;">Don't have one? <a href="https://aistudio.google.com/apikey" target="_blank" style="color: var(--accent, #4a9eff);">Get a free key here</a> (30 seconds, no credit card)</p>
+            <input type="text" id="first-time-key-input" placeholder="Paste your API key here..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #333; background: #0d1117; color: #fff; font-size: 1rem; margin-bottom: 1rem; box-sizing: border-box;">
+            <button onclick="saveFirstTimeKey()" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: none; background: var(--accent, #4a9eff); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer;">Save Key & Start</button>
+        </div>
+    `;
+    // Insert at top of home tab
+    const homeTab = document.getElementById('tab-home');
+    if (homeTab) {
+        homeTab.querySelector('.container').prepend(banner);
+    }
+}
+
+function saveFirstTimeKey() {
+    const input = document.getElementById('first-time-key-input');
+    const key = input.value.trim();
+    if (!key) {
+        input.style.borderColor = 'red';
+        return;
+    }
+    localStorage.setItem('tl-gemini-key', key);
+    const banner = document.getElementById('first-time-banner');
+    if (banner) banner.remove();
+    updateApiKeyStatus();
+    updateApiNotices();
+}
