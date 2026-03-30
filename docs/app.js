@@ -172,6 +172,122 @@ Return the full revised newsletter.
 }
 
 
+// --- API Key Management ---
+
+function getApiKey() {
+    return localStorage.getItem('tl-gemini-key') || '';
+}
+
+function hasApiKey() {
+    return getApiKey().length > 0;
+}
+
+function saveApiKey() {
+    const input = document.getElementById('settings-api-key');
+    const key = input.value.trim();
+
+    if (!key) {
+        showAlert('settings-msg', 'Please enter an API key.', 'error');
+        return;
+    }
+
+    localStorage.setItem('tl-gemini-key', key);
+    showAlert('settings-msg', 'API key saved successfully.', 'success');
+    updateApiKeyStatus();
+    updateApiNotices();
+}
+
+function clearApiKey() {
+    localStorage.removeItem('tl-gemini-key');
+    document.getElementById('settings-api-key').value = '';
+    showAlert('settings-msg', 'API key removed.', 'success');
+    updateApiKeyStatus();
+    updateApiNotices();
+}
+
+function toggleApiKeyVisibility() {
+    const input = document.getElementById('settings-api-key');
+    const btn = document.getElementById('toggle-key-btn');
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Hide';
+    } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+    }
+}
+
+function updateApiKeyStatus() {
+    const statusEl = document.getElementById('api-key-status');
+    const input = document.getElementById('settings-api-key');
+
+    if (hasApiKey()) {
+        const key = getApiKey();
+        const masked = key.substring(0, 6) + '...' + key.substring(key.length - 4);
+        statusEl.className = 'api-key-status status-ok';
+        statusEl.innerHTML = '<span class="status-icon">&#10003;</span> API key is configured (' + escapeHtml(masked) + ')';
+        // Pre-populate with masked value if field is empty
+        if (!input.value) {
+            input.value = key;
+            input.type = 'password';
+        }
+    } else {
+        statusEl.className = 'api-key-status status-missing';
+        statusEl.innerHTML = '<span class="status-icon">&#10007;</span> No API key configured. Drafts will use manual copy/paste mode.';
+    }
+}
+
+function updateApiNotices() {
+    const notices = ['li-api-notice', 'dg-api-notice'];
+    notices.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        if (!hasApiKey()) {
+            el.innerHTML = '<div class="api-notice">Add your Gemini API key in <a href="#" onclick="showTab(\'settings\'); return false;">Settings</a> to generate drafts directly. Or use the manual copy/paste method below.</div>';
+        } else {
+            el.innerHTML = '';
+        }
+    });
+}
+
+
+// --- Gemini API ---
+
+async function callGeminiAPI(promptText) {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        throw new Error('NO_API_KEY');
+    }
+
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+        })
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const msg = errorData?.error?.message || ('API returned status ' + response.status);
+        throw new Error(msg);
+    }
+
+    const data = await response.json();
+
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
+        throw new Error('Unexpected API response format. The model may have filtered the response.');
+    }
+
+    return data.candidates[0].content.parts[0].text;
+}
+
+
 // --- Tab Navigation ---
 
 function showTab(tabName) {
@@ -203,6 +319,16 @@ function showTab(tabName) {
         renderDrafts();
     }
 
+    // Refresh settings status
+    if (tabName === 'settings') {
+        updateApiKeyStatus();
+    }
+
+    // Update API notices on LinkedIn / Digest tabs
+    if (tabName === 'linkedin' || tabName === 'digest') {
+        updateApiNotices();
+    }
+
     // Scroll to top
     window.scrollTo(0, 0);
 }
@@ -214,41 +340,113 @@ function toggleMobileMenu() {
 
 // --- LinkedIn Post Generator ---
 
-function generateLinkedInPrompt() {
+async function generateLinkedInDraft() {
     const topic = document.getElementById('li-topic').value.trim();
     const thoughts = document.getElementById('li-thoughts').value.trim();
     const tone = document.getElementById('li-tone').value.trim();
     const variants = document.getElementById('li-variants').value;
 
     if (!topic) {
-        showAlert('li-save-msg', 'Please enter a topic.', 'error');
+        showAlert('li-error-msg', 'Please enter a topic.', 'error');
         document.getElementById('li-topic').focus();
         return;
     }
 
     const prompt = buildLinkedInPrompt(topic, thoughts, tone, parseInt(variants));
 
-    document.getElementById('li-prompt-output').textContent = prompt;
-    document.getElementById('li-prompt-section').style.display = 'block';
+    if (!hasApiKey()) {
+        // Fallback: show prompt for copy/paste
+        document.getElementById('li-prompt-output').textContent = prompt;
+        document.getElementById('li-prompt-section').style.display = 'block';
+        document.getElementById('li-save-section').style.display = 'block';
+        document.getElementById('li-output-section').style.display = 'none';
+        document.getElementById('li-prompt-section').scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
 
-    // Scroll to the prompt
-    document.getElementById('li-prompt-section').scrollIntoView({ behavior: 'smooth' });
+    // API mode
+    document.getElementById('li-prompt-section').style.display = 'none';
+    document.getElementById('li-save-section').style.display = 'none';
+    document.getElementById('li-output-section').style.display = 'block';
+    document.getElementById('li-loading').style.display = 'flex';
+    document.getElementById('li-generated-output').style.display = 'none';
+    document.getElementById('li-output-actions').style.display = 'none';
+    document.getElementById('li-error-msg').innerHTML = '';
+    document.getElementById('li-generate-btn').disabled = true;
+
+    document.getElementById('li-output-section').scrollIntoView({ behavior: 'smooth' });
+
+    try {
+        const result = await callGeminiAPI(prompt);
+        document.getElementById('li-generated-output').textContent = result;
+        document.getElementById('li-generated-output').style.display = 'block';
+        document.getElementById('li-output-actions').style.display = 'flex';
+    } catch (err) {
+        if (err.message === 'NO_API_KEY') {
+            showAlert('li-error-msg', 'No API key found. Go to Settings to add one.', 'error');
+        } else {
+            showAlert('li-error-msg', 'API error: ' + err.message, 'error');
+        }
+    } finally {
+        document.getElementById('li-loading').style.display = 'none';
+        document.getElementById('li-generate-btn').disabled = false;
+    }
 }
 
-function generateLinkedInRefinePrompt() {
+function saveGeneratedLinkedIn() {
+    const content = document.getElementById('li-generated-output').textContent.trim();
+    const topic = document.getElementById('li-topic').value.trim();
+
+    if (!content) return;
+
+    saveDraft('linkedin', content, { topic: topic });
+    showAlert('li-error-msg', 'Draft saved! View it in the Saved Drafts tab.', 'success');
+}
+
+async function generateLinkedInRefine() {
     const draft = document.getElementById('li-refine-draft').value.trim();
     const feedback = document.getElementById('li-refine-feedback').value.trim();
 
     if (!draft || !feedback) {
-        showAlert('li-save-msg', 'Please provide both the draft and your feedback.', 'error');
+        showAlert('li-error-msg', 'Please provide both the draft and your feedback.', 'error');
         return;
     }
 
     const prompt = buildRefinePrompt(draft, feedback);
 
-    document.getElementById('li-refine-output').textContent = prompt;
+    if (!hasApiKey()) {
+        // Fallback
+        document.getElementById('li-refine-prompt-output').textContent = prompt;
+        document.getElementById('li-refine-section').style.display = 'block';
+        document.getElementById('li-refine-fallback').style.display = 'block';
+        document.getElementById('li-refine-output').style.display = 'none';
+        document.getElementById('li-refine-actions').style.display = 'none';
+        document.getElementById('li-refine-section').scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+
+    // API mode
     document.getElementById('li-refine-section').style.display = 'block';
+    document.getElementById('li-refine-fallback').style.display = 'none';
+    document.getElementById('li-refine-loading').style.display = 'flex';
+    document.getElementById('li-refine-output').style.display = 'none';
+    document.getElementById('li-refine-actions').style.display = 'none';
+    document.getElementById('li-refine-error-msg').innerHTML = '';
+    document.getElementById('li-refine-btn').disabled = true;
+
     document.getElementById('li-refine-section').scrollIntoView({ behavior: 'smooth' });
+
+    try {
+        const result = await callGeminiAPI(prompt);
+        document.getElementById('li-refine-output').textContent = result;
+        document.getElementById('li-refine-output').style.display = 'block';
+        document.getElementById('li-refine-actions').style.display = 'flex';
+    } catch (err) {
+        showAlert('li-refine-error-msg', 'API error: ' + err.message, 'error');
+    } finally {
+        document.getElementById('li-refine-loading').style.display = 'none';
+        document.getElementById('li-refine-btn').disabled = false;
+    }
 }
 
 function saveLinkedInDraft() {
@@ -256,7 +454,7 @@ function saveLinkedInDraft() {
     const topic = document.getElementById('li-topic').value.trim();
 
     if (!content) {
-        showAlert('li-save-msg', 'Please paste Claude\'s response first.', 'error');
+        showAlert('li-save-msg', 'Please paste the response first.', 'error');
         return;
     }
 
@@ -268,37 +466,111 @@ function saveLinkedInDraft() {
 
 // --- Digest Builder ---
 
-function generateDigestPrompt() {
+async function generateDigestDraft() {
     const intel = document.getElementById('dg-intel').value.trim();
     const focus = document.getElementById('dg-focus').value.trim();
 
     if (!intel) {
-        showAlert('dg-save-msg', 'Please paste your research / intelligence data.', 'error');
+        showAlert('dg-error-msg', 'Please paste your research / intelligence data.', 'error');
         document.getElementById('dg-intel').focus();
         return;
     }
 
     const prompt = buildDigestPrompt(intel, focus);
 
-    document.getElementById('dg-prompt-output').textContent = prompt;
-    document.getElementById('dg-prompt-section').style.display = 'block';
-    document.getElementById('dg-prompt-section').scrollIntoView({ behavior: 'smooth' });
+    if (!hasApiKey()) {
+        // Fallback: show prompt for copy/paste
+        document.getElementById('dg-prompt-output').textContent = prompt;
+        document.getElementById('dg-prompt-section').style.display = 'block';
+        document.getElementById('dg-save-section').style.display = 'block';
+        document.getElementById('dg-output-section').style.display = 'none';
+        document.getElementById('dg-prompt-section').scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+
+    // API mode
+    document.getElementById('dg-prompt-section').style.display = 'none';
+    document.getElementById('dg-save-section').style.display = 'none';
+    document.getElementById('dg-output-section').style.display = 'block';
+    document.getElementById('dg-loading').style.display = 'flex';
+    document.getElementById('dg-generated-output').style.display = 'none';
+    document.getElementById('dg-output-actions').style.display = 'none';
+    document.getElementById('dg-error-msg').innerHTML = '';
+    document.getElementById('dg-generate-btn').disabled = true;
+
+    document.getElementById('dg-output-section').scrollIntoView({ behavior: 'smooth' });
+
+    try {
+        const result = await callGeminiAPI(prompt);
+        document.getElementById('dg-generated-output').textContent = result;
+        document.getElementById('dg-generated-output').style.display = 'block';
+        document.getElementById('dg-output-actions').style.display = 'flex';
+    } catch (err) {
+        if (err.message === 'NO_API_KEY') {
+            showAlert('dg-error-msg', 'No API key found. Go to Settings to add one.', 'error');
+        } else {
+            showAlert('dg-error-msg', 'API error: ' + err.message, 'error');
+        }
+    } finally {
+        document.getElementById('dg-loading').style.display = 'none';
+        document.getElementById('dg-generate-btn').disabled = false;
+    }
 }
 
-function generateDigestRefinePrompt() {
+function saveGeneratedDigest() {
+    const content = document.getElementById('dg-generated-output').textContent.trim();
+    const focus = document.getElementById('dg-focus').value.trim();
+
+    if (!content) return;
+
+    saveDraft('digest', content, { custom_focus: focus });
+    showAlert('dg-error-msg', 'Digest saved! View it in the Saved Drafts tab.', 'success');
+}
+
+async function generateDigestRefine() {
     const draft = document.getElementById('dg-refine-draft').value.trim();
     const feedback = document.getElementById('dg-refine-feedback').value.trim();
 
     if (!draft || !feedback) {
-        showAlert('dg-save-msg', 'Please provide both the digest and your feedback.', 'error');
+        showAlert('dg-error-msg', 'Please provide both the digest and your feedback.', 'error');
         return;
     }
 
     const prompt = buildDigestRefinePrompt(draft, feedback);
 
-    document.getElementById('dg-refine-output').textContent = prompt;
+    if (!hasApiKey()) {
+        // Fallback
+        document.getElementById('dg-refine-prompt-output').textContent = prompt;
+        document.getElementById('dg-refine-section').style.display = 'block';
+        document.getElementById('dg-refine-fallback').style.display = 'block';
+        document.getElementById('dg-refine-output').style.display = 'none';
+        document.getElementById('dg-refine-actions').style.display = 'none';
+        document.getElementById('dg-refine-section').scrollIntoView({ behavior: 'smooth' });
+        return;
+    }
+
+    // API mode
     document.getElementById('dg-refine-section').style.display = 'block';
+    document.getElementById('dg-refine-fallback').style.display = 'none';
+    document.getElementById('dg-refine-loading').style.display = 'flex';
+    document.getElementById('dg-refine-output').style.display = 'none';
+    document.getElementById('dg-refine-actions').style.display = 'none';
+    document.getElementById('dg-refine-error-msg').innerHTML = '';
+    document.getElementById('dg-refine-btn').disabled = true;
+
     document.getElementById('dg-refine-section').scrollIntoView({ behavior: 'smooth' });
+
+    try {
+        const result = await callGeminiAPI(prompt);
+        document.getElementById('dg-refine-output').textContent = result;
+        document.getElementById('dg-refine-output').style.display = 'block';
+        document.getElementById('dg-refine-actions').style.display = 'flex';
+    } catch (err) {
+        showAlert('dg-refine-error-msg', 'API error: ' + err.message, 'error');
+    } finally {
+        document.getElementById('dg-refine-loading').style.display = 'none';
+        document.getElementById('dg-refine-btn').disabled = false;
+    }
 }
 
 function saveDigestDraft() {
@@ -306,13 +578,32 @@ function saveDigestDraft() {
     const focus = document.getElementById('dg-focus').value.trim();
 
     if (!content) {
-        showAlert('dg-save-msg', 'Please paste Claude\'s response first.', 'error');
+        showAlert('dg-save-msg', 'Please paste the response first.', 'error');
         return;
     }
 
     saveDraft('digest', content, { custom_focus: focus });
     document.getElementById('dg-result').value = '';
     showAlert('dg-save-msg', 'Digest saved! View it in the Saved Drafts tab.', 'success');
+}
+
+// --- Save from Refine (shared for both LinkedIn and Digest) ---
+
+function saveGeneratedRefine(type) {
+    const prefix = type === 'linkedin' ? 'li' : 'dg';
+    const content = document.getElementById(prefix + '-refine-output').textContent.trim();
+    if (!content) return;
+
+    const metaKey = type === 'linkedin' ? 'topic' : 'custom_focus';
+    const metaSourceId = type === 'linkedin' ? 'li-topic' : 'dg-focus';
+    const metaVal = document.getElementById(metaSourceId) ? document.getElementById(metaSourceId).value.trim() : '';
+
+    const metadata = {};
+    metadata[metaKey] = metaVal;
+
+    saveDraft(type, content, metadata);
+    const msgId = prefix + '-refine-error-msg';
+    showAlert(msgId, 'Refined draft saved! View it in the Saved Drafts tab.', 'success');
 }
 
 
@@ -520,3 +811,11 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+
+// --- Initialization ---
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateApiKeyStatus();
+    updateApiNotices();
+});

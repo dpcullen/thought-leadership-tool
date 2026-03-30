@@ -528,6 +528,118 @@ select {
     padding-right: 2.5rem;
 }
 
+/* Loading spinner */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Generated output */
+.generated-output {
+    white-space: pre-wrap;
+    line-height: 1.8;
+}
+
+/* API key status */
+.api-key-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+.api-key-status.status-ok {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: var(--success);
+}
+
+.api-key-status.status-missing {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--danger);
+}
+
+.status-icon {
+    font-size: 1.1rem;
+}
+
+/* API key input row */
+.api-key-input-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.api-key-input-row input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.api-key-input-row input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.btn-icon {
+    padding: 0.7rem 1rem;
+    white-space: nowrap;
+}
+
+/* API notice banner */
+.api-notice {
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.api-notice a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.api-notice a:hover {
+    text-decoration: underline;
+}
+
+/* Settings nav indicator */
+nav a[data-tab="settings"] {
+    position: relative;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {
