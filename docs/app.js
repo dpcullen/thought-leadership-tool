@@ -816,6 +816,10 @@ function escapeHtml(text) {
 // --- Initialization ---
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-configure API key on first visit
+    if (!localStorage.getItem('tl-gemini-key')) {
+        localStorage.setItem('tl-gemini-key', 'AIzaSyA-sZxt5gF9Zi31_wqoMNYTyEDn4LXiuJg');
+    }
     updateApiKeyStatus();
     updateApiNotices();
 });
