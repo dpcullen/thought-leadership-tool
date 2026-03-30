@@ -268,7 +268,7 @@ async function callGeminiAPI(promptText) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         })
     });
 
